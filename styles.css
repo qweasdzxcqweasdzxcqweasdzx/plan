@@ -1,0 +1,782 @@
+/* Сброс стилей и базовые настройки */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    color: #ffffff;
+}
+
+/* Контейнер презентации */
+.presentation-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Навигация - скрыта */
+.navigation {
+    display: none;
+}
+
+/* Слайды */
+.slides-wrapper {
+    position: relative;
+    width: 95%;
+    max-width: 1400px;
+    height: 95vh;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: translateX(100px);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide.active {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.slide-content {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+    max-height: 100%;
+    overflow: hidden; /* Убираем скролл */
+    animation: slideIn 0.8s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Титульный слайд - компактный */
+.hero-section {
+    position: relative;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(30px);
+    border-radius: 25px;
+    padding: 40px 30px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    animation: heroGlow 3s ease-in-out infinite alternate;
+}
+
+@keyframes heroGlow {
+    from {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+    to {
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.3);
+    }
+}
+
+.main-title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    animation: titlePulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes titlePulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.02); }
+}
+
+.authors {
+    margin-bottom: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.author {
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 400;
+    opacity: 0.9;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+    animation: authorSlide 0.6s ease-out;
+}
+
+.author:nth-child(1) { animation-delay: 0.2s; }
+.author:nth-child(2) { animation-delay: 0.4s; }
+
+@keyframes authorSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 0.9;
+        transform: translateX(0);
+    }
+}
+
+.author:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-3px);
+}
+
+.hero-visual {
+    position: relative;
+    height: 120px;
+    margin-top: 25px;
+}
+
+.floating-elements {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.element {
+    position: absolute;
+    border-radius: 15px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.element-1 {
+    width: 80px;
+    height: 80px;
+    top: 10px;
+    left: 20%;
+    animation: float 6s ease-in-out infinite;
+}
+
+.element-2 {
+    width: 60px;
+    height: 60px;
+    top: 40px;
+    right: 25%;
+    animation: float 4s ease-in-out infinite reverse;
+}
+
+.element-3 {
+    width: 70px;
+    height: 70px;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: float 5s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(3deg); }
+}
+
+/* Заголовки слайдов - компактные */
+.slide-title {
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 600;
+    margin-bottom: 25px;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+}
+
+.slide-title::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 1px;
+    animation: underlineGrow 0.8s ease-out;
+}
+
+@keyframes underlineGrow {
+    from { width: 0; }
+    to { width: 80px; }
+}
+
+/* Распределение обязанностей - компактное */
+.responsibilities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.responsibility-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 25px 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: cardSlideUp 0.6s ease-out;
+}
+
+.responsibility-card:nth-child(1) { animation-delay: 0.1s; }
+.responsibility-card:nth-child(2) { animation-delay: 0.2s; }
+
+@keyframes cardSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.responsibility-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.responsibility-card:hover::before {
+    left: 100%;
+}
+
+.responsibility-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.responsibility-card h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #e0e7ff;
+}
+
+.responsibility-card ul {
+    list-style: none;
+    text-align: left;
+}
+
+.responsibility-card li {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    padding: 8px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.responsibility-card li:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+    border-left-color: #e0e7ff;
+}
+
+.highlight {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    box-shadow: 0 2px 6px rgba(102, 126, 234, 0.3);
+}
+
+/* План встречи - компактный */
+.meeting-plan {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 25px;
+}
+
+.trainings-list {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 25px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    animation: slideInLeft 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.trainings-list h3 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, #ffffff 0%, #e0e7ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.training-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.4s ease;
+    animation: itemFadeIn 0.5s ease-out;
+}
+
+.training-item:nth-child(n+2) { animation-delay: calc((n-1) * 0.05s); }
+
+@keyframes itemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.training-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateX(5px) scale(1.01);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+}
+
+.training-type {
+    font-weight: 600;
+    color: #e0e7ff;
+    font-size: 0.85rem;
+}
+
+.training-name {
+    font-weight: 400;
+    opacity: 0.9;
+    font-size: 0.85rem;
+}
+
+.meeting-goal {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 25px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.meeting-goal p {
+    font-size: 1rem;
+    line-height: 1.6;
+    opacity: 0.95;
+    text-align: left;
+}
+
+/* Расписание - компактное */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 25px;
+}
+
+.event-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    animation: cardSlideUp 0.6s ease-out;
+}
+
+.event-card:nth-child(1) { animation-delay: 0.1s; }
+.event-card:nth-child(2) { animation-delay: 0.2s; }
+.event-card:nth-child(3) { animation-delay: 0.3s; }
+
+.event-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.event-card:hover::before {
+    left: 100%;
+}
+
+.event-card:hover {
+    transform: translateY(-8px) scale(1.01);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.event-card h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #e0e7ff;
+    position: relative;
+}
+
+.event-card h3::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 1px;
+}
+
+.event-details {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 15px;
+    border-left: 3px solid #667eea;
+}
+
+.event-details p {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.event-description {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.event-description h4 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #e0e7ff;
+    font-weight: 600;
+}
+
+.event-description p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+/* Остальные слайды - компактные */
+.picnic-trainings,
+.remaining-events,
+.prof-info,
+.leader-info,
+.force-majeure {
+    text-align: left;
+    margin-top: 25px;
+}
+
+.training-category,
+.month-event,
+.prof-description,
+.leader-description,
+.fm-content {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    animation: cardSlideUp 0.6s ease-out;
+}
+
+.training-category:nth-child(n) { animation-delay: calc(n * 0.05s); }
+.month-event:nth-child(n) { animation-delay: calc(n * 0.05s); }
+
+.training-category::before,
+.month-event::before,
+.prof-description::before,
+.leader-description::before,
+.fm-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.training-category:hover::before,
+.month-event:hover::before,
+.prof-description:hover::before,
+.leader-description:hover::before,
+.fm-content:hover::before {
+    left: 100%;
+}
+
+.training-category:hover,
+.month-event:hover,
+.prof-description:hover,
+.leader-description:hover,
+.fm-content:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.training-category h3,
+.month-event h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #e0e7ff;
+    position: relative;
+}
+
+.training-category h3::after,
+.month-event h3::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 1px;
+}
+
+.month-event h4 {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 15px;
+    opacity: 0.9;
+    color: #ffffff;
+}
+
+.training-details p,
+.event-info p,
+.prof-description p,
+.leader-description p,
+.fm-content p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+blockquote {
+    background: rgba(255, 255, 255, 0.08);
+    border-left: 4px solid #e0e7ff;
+    padding: 15px 20px;
+    margin: 15px 0;
+    border-radius: 0 15px 15px 0;
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    opacity: 0.95;
+    position: relative;
+}
+
+blockquote::before {
+    content: '"';
+    position: absolute;
+    top: -5px;
+    left: 15px;
+    font-size: 3rem;
+    color: #e0e7ff;
+    opacity: 0.3;
+}
+
+.leader-functions {
+    list-style: none;
+    padding-left: 0;
+}
+
+.leader-functions li {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 12px;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.leader-functions li:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(5px);
+    border-left-color: #e0e7ff;
+}
+
+.leader-functions li::before {
+    content: '→';
+    position: absolute;
+    left: -12px;
+    color: #e0e7ff;
+    font-weight: bold;
+    font-size: 1rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .slide-content {
+        padding: 15px;
+    }
+    
+    .meeting-plan {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .schedule-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .responsibilities-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .training-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+        padding: 10px 15px;
+    }
+    
+    .hero-section {
+        padding: 30px 20px;
+    }
+    
+    .hero-visual {
+        height: 80px;
+    }
+}
+
+@media (max-width: 480px) {
+    .slides-wrapper {
+        width: 98%;
+        height: 95vh;
+    }
+    
+    .slide-content {
+        padding: 10px;
+    }
+    
+    .main-title {
+        font-size: 2rem;
+    }
+    
+    .slide-title {
+        font-size: 1.5rem;
+    }
+    
+    .responsibility-card,
+    .event-card,
+    .training-category,
+    .month-event {
+        padding: 15px;
+    }
+}
+
+/* Убираем скроллбар полностью */
+.slide-content::-webkit-scrollbar {
+    display: none;
+}
+
+.slide-content {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
