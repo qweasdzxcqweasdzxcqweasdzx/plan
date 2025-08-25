@@ -991,8 +991,23 @@ blockquote::before {
     margin-top: 40px;
 }
 
-/* Адаптивность */
+/* Улучшенная мобильная версия */
 @media (max-width: 768px) {
+    /* Основные настройки для планшетов */
+    .slide::after {
+        width: 60px;
+        height: 60px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .hero-section::before {
+        width: 80px;
+        height: 80px;
+        top: 15px;
+        right: 15px;
+    }
+    
     .slide-content {
         padding: 15px;
     }
@@ -1023,9 +1038,35 @@ blockquote::before {
         flex-direction: column;
         text-align: center;
     }
+    
+    /* Twitch слайд для планшетов */
+    .promo-content {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+    
+    .qr-code {
+        width: 150px;
+        height: 150px;
+    }
+    
+    .channel-name {
+        font-size: 2rem;
+    }
+    
+    .twitch-header h3 {
+        font-size: 2rem;
+    }
+    
+    .cta-button {
+        padding: 15px 30px;
+        font-size: 1.2rem;
+    }
 }
 
+/* Специальная версия для телефонов */
 @media (max-width: 480px) {
+    /* Контейнер и слайды */
     .slides-wrapper {
         width: 98%;
         height: 95vh;
@@ -1035,14 +1076,65 @@ blockquote::before {
         padding: 10px;
     }
     
+    /* Логотипы */
+    .slide::after {
+        width: 50px;
+        height: 50px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .hero-section::before {
+        width: 60px;
+        height: 60px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* Заголовки */
     .main-title {
         font-size: 2rem;
+        margin-bottom: 20px;
     }
     
     .slide-title {
         font-size: 1.5rem;
+        margin-bottom: 20px;
     }
     
+    .slide-title::after {
+        width: 80px;
+        height: 3px;
+    }
+    
+    /* Титульный слайд */
+    .hero-section {
+        padding: 20px 15px;
+        border-radius: 20px;
+    }
+    
+    .authors {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .author {
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 20px;
+    }
+    
+    .hero-visual {
+        height: 80px;
+        margin-top: 20px;
+    }
+    
+    .element-1, .element-2, .element-3 {
+        width: 60px;
+        height: 60px;
+    }
+    
+    /* Карточки */
     .card-base,
     .photo-card,
     .responsibility-item,
@@ -1055,7 +1147,442 @@ blockquote::before {
     .prof-documents,
     .leader-description,
     .fm-content {
+        padding: 15px;
+        border-radius: 20px;
+        margin-bottom: 15px;
+    }
+    
+    /* Фотографии команды */
+    .photo-placeholder {
+        height: 120px;
+        border-radius: 12px;
+    }
+    
+    /* План встречи */
+    .timing-section,
+    .trainings-section {
+        padding: 20px;
+    }
+    
+    .timing-section h3,
+    .trainings-section h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    
+    .timing-item {
+        padding: 12px 15px;
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+    }
+    
+    .time {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #4CAF50;
+    }
+    
+    .activity {
+        font-size: 0.8rem;
+    }
+    
+    .training-card {
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .training-card h4 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    
+    .training-card p {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    /* Детали тренингов */
+    .training-detail-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .training-detail-card p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    
+    /* Расписание */
+    .event-image {
+        height: 120px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .event-info {
+        padding: 15px;
+    }
+    
+    .event-info h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    
+    .event-details p {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    /* Неформальные мероприятия */
+    .event-section {
+        padding: 20px;
+    }
+    
+    .event-section h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    
+    .event-section p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    
+    .timing-info {
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 12px;
+    }
+    
+    .timing-info h4 {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+    
+    .timing-info li {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+        padding-left: 15px;
+    }
+    
+    /* Оставшиеся неформалки */
+    .month-event {
+        padding: 20px;
+    }
+    
+    .event-header {
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .loft-image,
+    .museum-logo,
+    .skating-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+    }
+    
+    .event-title h3 {
+        font-size: 1.3rem;
+        margin-bottom: 3px;
+    }
+    
+    .event-title h4 {
+        font-size: 1rem;
+    }
+    
+    /* Информация о неформалках */
+    .info-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .info-card p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    
+    /* ПРОФ секция */
+    .prof-section {
+        gap: 20px;
+    }
+    
+    .prof-text {
+        padding: 20px;
+    }
+    
+    .prof-text p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    
+    blockquote {
+        padding: 15px 20px;
+        margin: 15px 0;
+        border-radius: 0 15px 15px 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    blockquote::before {
+        font-size: 3rem;
+        top: -5px;
+        left: 15px;
+    }
+    
+    /* Лидер группы */
+    .leader-description {
+        padding: 20px;
+    }
+    
+    .leader-intro {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+    
+    .leader-description p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    
+    .leader-functions li {
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-bottom: 10px;
+        padding: 12px 15px;
+        padding-left: 25px;
+        border-radius: 10px;
+    }
+    
+    .leader-functions li::before {
+        left: -12px;
+        font-size: 1rem;
+    }
+    
+    /* Форс-мажоры */
+    .fm-content {
+        padding: 30px 20px;
+    }
+    
+    .fm-content::after {
+        font-size: 2.5rem;
+        top: 15px;
+    }
+    
+    .fm-content p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-top: 35px;
+    }
+    
+    /* Twitch слайд для телефонов */
+    .twitch-promo {
+        padding: 10px;
+    }
+    
+    .twitch-header {
         padding: 20px 15px;
+        margin-bottom: 30px;
+        border-radius: 20px;
+    }
+    
+    .twitch-logo {
+        font-size: 3rem;
+        margin-bottom: 10px;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+    }
+    
+    .channel-name {
+        font-size: 1.8rem;
+    }
+    
+    .promo-content {
+        gap: 25px;
+    }
+    
+    .qr-container {
+        padding: 20px;
+        border-radius: 20px;
+    }
+    
+    .qr-code {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        border-width: 2px;
+    }
+    
+    .qr-text {
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+    
+    .channel-info {
+        gap: 15px;
+    }
+    
+    .info-card {
+        padding: 15px;
+        border-radius: 15px;
+    }
+    
+    .info-card h4 {
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+    
+    .info-card p {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    .call-to-action {
+        padding: 25px 15px;
+        border-radius: 20px;
+    }
+    
+    .cta-button {
+        padding: 15px 25px;
+        font-size: 1.1rem;
+        border-radius: 40px;
+        margin-bottom: 15px;
+        gap: 10px;
+    }
+    
+    .twitch-icon {
+        font-size: 1.3rem;
+    }
+    
+    .cta-text {
+        font-size: 0.9rem;
+    }
+    
+    /* Улучшения для сенсорного управления */
+    .timing-item,
+    .training-card,
+    .info-card,
+    .cta-button {
+        min-height: 44px; /* Минимальный размер для касания */
+    }
+    
+    /* Увеличенные отступы для лучшего чтения */
+    .responsibility-item h3,
+    .training-detail-card h3,
+    .event-info h3,
+    .info-card h4 {
+        line-height: 1.3;
+    }
+    
+    /* Оптимизация анимаций для мобильных */
+    .card-base:hover,
+    .photo-card:hover,
+    .responsibility-item:hover,
+    .training-card:hover,
+    .info-card:hover {
+        transform: translateY(-5px) scale(1.01);
+    }
+    
+    /* Скрытие сложных анимаций на мобильных */
+    .hero-section::after,
+    .presentation-container::after {
+        display: none;
+    }
+    
+    /* Упрощение фона для лучшей производительности */
+    body::before {
+        background-size: 40px 40px;
+        opacity: 0.2;
+    }
+    
+    body::after {
+        width: 400px;
+        height: 400px;
+        opacity: 0.02;
+    }
+}
+
+/* Очень маленькие экраны (iPhone SE и подобные) */
+@media (max-width: 375px) {
+    .main-title {
+        font-size: 1.8rem;
+    }
+    
+    .slide-title {
+        font-size: 1.3rem;
+    }
+    
+    .channel-name {
+        font-size: 1.5rem;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .qr-code {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .cta-button {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+    
+    .card-base,
+    .photo-card,
+    .responsibility-item,
+    .training-detail-card,
+    .event-card,
+    .month-event,
+    .training-category,
+    .info-card {
+        padding: 12px;
+    }
+}
+
+/* Ландшафтная ориентация на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+    .slides-wrapper {
+        height: 90vh;
+    }
+    
+    .slide-content {
+        padding: 10px;
+    }
+    
+    .hero-section {
+        padding: 20px 15px;
+    }
+    
+    .main-title {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+    }
+    
+    .slide-title {
+        font-size: 1.4rem;
+        margin-bottom: 15px;
+    }
+    
+    .authors {
+        margin-bottom: 15px;
+    }
+    
+    .hero-visual {
+        height: 60px;
+        margin-top: 15px;
     }
 }
 
@@ -1431,57 +1958,4 @@ blockquote::before {
 .qr-center p {
     margin: 2px 0;
     font-size: 0.9rem;
-}
-
-/* Адаптивность для Twitch слайда */
-@media (max-width: 768px) {
-    .promo-content {
-        grid-template-columns: 1fr;
-        gap: 30px;
-    }
-    
-    .qr-code {
-        width: 150px;
-        height: 150px;
-    }
-    
-    .channel-name {
-        font-size: 2rem;
-    }
-    
-    .twitch-header h3 {
-        font-size: 2rem;
-    }
-    
-    .cta-button {
-        padding: 15px 30px;
-        font-size: 1.2rem;
-    }
-}
-
-@media (max-width: 480px) {
-    .twitch-promo {
-        padding: 10px;
-    }
-    
-    .qr-code {
-        width: 120px;
-        height: 120px;
-    }
-    
-    .channel-name {
-        font-size: 1.5rem;
-    }
-    
-    .twitch-header h3 {
-        font-size: 1.5rem;
-    }
-    
-    .info-card {
-        padding: 20px;
-    }
-    
-    .call-to-action {
-        padding: 30px 20px;
-    }
 }
