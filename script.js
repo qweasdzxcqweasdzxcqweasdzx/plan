@@ -3,7 +3,7 @@ class Presentation {
     constructor() {
         this.currentSlide = 0;
         this.slides = document.querySelectorAll('.slide');
-        this.totalSlides = this.slides.length;
+        this.totalSlides = this.slides.length; // Теперь будет 13 слайдов
         this.isAnimating = false;
         
         this.init();
