@@ -2,7 +2,10 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>План Адаптации</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -385,7 +388,13 @@
                     <div class="qr-section">
                         <div class="qr-container">
                             <div class="qr-code">
-                                <img src="qr-code.png" alt="QR код Twitch канала c1ten12" class="qr-image" />
+                                <div class="qr-placeholder">
+                                    <div class="qr-center">
+                                        <span>📱</span>
+                                        <p>QR-код</p>
+                                        <p>c1ten12</p>
+                                    </div>
+                                </div>
                             </div>
                             <p class="qr-text">Сканируйте QR-код</p>
                         </div>
@@ -410,6 +419,21 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Мобильная навигация -->
+    <div class="mobile-navigation">
+        <button class="nav-btn prev-btn" id="prevBtn">
+            <span class="nav-icon">‹</span>
+        </button>
+        <div class="slide-indicator">
+            <span class="current-slide" id="currentSlide">1</span>
+            <span class="slide-separator">/</span>
+            <span class="total-slides">13</span>
+        </div>
+        <button class="nav-btn next-btn" id="nextBtn">
+            <span class="nav-icon">›</span>
+        </button>
     </div>
 
     <script src="script.js"></script>
