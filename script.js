@@ -83,6 +83,10 @@ class Presentation {
         document.addEventListener('touchmove', (e) => {
             if (!startX || !startY) return;
             
+            // Проверяем, если касание на ссылке или кнопке, не блокируем
+            const target = e.target.closest('a, button');
+            if (target) return;
+            
             const diffX = startX - e.touches[0].clientX;
             const diffY = startY - e.touches[0].clientY;
             
@@ -107,6 +111,17 @@ class Presentation {
         
         document.addEventListener('touchend', (e) => {
             if (this.isAnimating) return;
+            
+            // Проверяем, если касание на ссылке или кнопке, не обрабатываем свайпы
+            const target = e.target.closest('a, button');
+            if (target) {
+                // Сбрасываем значения и выходим
+                startX = 0;
+                startY = 0;
+                startTime = 0;
+                isVerticalScroll = false;
+                return;
+            }
             
             const endX = e.changedTouches[0].clientX;
             const endY = e.changedTouches[0].clientY;
@@ -137,6 +152,23 @@ class Presentation {
             startTime = 0;
             isVerticalScroll = false;
         }, { passive: true });
+        
+        // Обработчик для ссылок Twitch
+        document.addEventListener('click', (e) => {
+            const twitchLink = e.target.closest('a[href*="twitch.tv"]');
+            if (twitchLink) {
+                // Добавляем визуальную обратную связь
+                twitchLink.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    twitchLink.style.transform = '';
+                }, 150);
+                
+                // Вибрация для мобильных устройств
+                if (navigator.vibrate) {
+                    navigator.vibrate(100);
+                }
+            }
+        });
     }
     
     showSlide(index) {
