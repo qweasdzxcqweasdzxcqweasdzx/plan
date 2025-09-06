@@ -1895,6 +1895,10 @@ blockquote::before {
         font-size: 1.5rem;
     }
     
+    .channel-name:hover {
+        transform: scale(1.02);
+    }
+    
     .twitch-header h3 {
         font-size: 1.3rem;
     }
@@ -2061,6 +2065,21 @@ blockquote::before {
     background-clip: text;
     text-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
     animation: glow 2s ease-in-out infinite alternate;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+    border: none;
+}
+
+.channel-name:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+    filter: brightness(1.2);
 }
 
 @keyframes glow {
@@ -2315,12 +2334,20 @@ blockquote::before {
     transition: all 0.3s ease;
     cursor: pointer;
     margin-bottom: 20px;
+    text-decoration: none;
+    border: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .cta-button:hover {
     transform: translateY(-5px) scale(1.05);
     box-shadow: 0 15px 35px rgba(46, 125, 50, 0.6);
     background: linear-gradient(135deg, #388E3C 0%, #66BB6A 100%);
+    text-decoration: none;
+    color: #ffffff;
 }
 
 .twitch-icon {
