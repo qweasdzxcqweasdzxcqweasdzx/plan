@@ -175,6 +175,37 @@ body::after {
     /* Убираем отступ снизу для мобильной навигации */
     .slides-wrapper {
         margin-bottom: 100px;
+        height: calc(100vh - 100px);
+    }
+    
+    .slide {
+        align-items: flex-start;
+        padding-top: 20px;
+    }
+    
+    .slide-content {
+        padding: 15px;
+        min-height: calc(100vh - 140px);
+        justify-content: flex-start;
+    }
+    
+    /* Прокрутка для мобильных */
+    .slide::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .slide::-webkit-scrollbar-track {
+        background: rgba(46, 125, 50, 0.1);
+        border-radius: 2px;
+    }
+    
+    .slide::-webkit-scrollbar-thumb {
+        background: rgba(76, 175, 80, 0.5);
+        border-radius: 2px;
+    }
+    
+    .slide::-webkit-scrollbar-thumb:hover {
+        background: rgba(76, 175, 80, 0.7);
     }
 }
 
@@ -202,6 +233,130 @@ body::after {
     .current-slide {
         font-size: 16px;
     }
+    
+    /* Мобильная адаптация контента */
+    .main-title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    
+    .slide-title {
+        font-size: 1.8rem;
+        margin-bottom: 20px;
+    }
+    
+    .hero-section {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .authors {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .author {
+        font-size: 1rem;
+        padding: 12px 20px;
+    }
+    
+    /* Сетки в одну колонку */
+    .responsibilities-section,
+    .meeting-plan,
+    .training-details,
+    .schedule-grid,
+    .info-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px;
+    }
+    
+    /* Меньше отступы в карточках */
+    .photo-card,
+    .responsibility-item,
+    .timing-section,
+    .trainings-section,
+    .training-card,
+    .meeting-goal,
+    .training-detail-card,
+    .event-card,
+    .month-event,
+    .training-category,
+    .info-card,
+    .prof-text,
+    .prof-documents,
+    .leader-description,
+    .fm-content {
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    /* Тайминги */
+    .timing-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+        padding: 12px 15px;
+    }
+    
+    .time,
+    .activity {
+        font-size: 0.85rem;
+    }
+    
+    /* Фото команды */
+    .photo-placeholder {
+        height: 120px;
+    }
+    
+    /* Меньше визуальные элементы */
+    .hero-visual {
+        height: 100px;
+        margin-top: 20px;
+    }
+    
+    .element {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    /* Twitch слайд адаптация */
+    .twitch-promo {
+        padding: 15px;
+    }
+    
+    .promo-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .qr-container {
+        order: 2;
+    }
+    
+    .channel-info {
+        order: 1;
+    }
+    
+    .qr-code {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.4rem;
+    }
+    
+    .channel-name {
+        font-size: 1.1rem;
+    }
+    
+    .info-card h4 {
+        font-size: 1rem;
+    }
+    
+    .info-card p {
+        font-size: 0.85rem;
+    }
 }
 
 /* Для ландшафтной ориентации */
@@ -213,6 +368,52 @@ body::after {
     
     .slides-wrapper {
         margin-bottom: 80px;
+        height: calc(100vh - 80px);
+    }
+    
+    .slide-content {
+        min-height: calc(100vh - 120px);
+    }
+    
+    .main-title {
+        font-size: 2.2rem;
+    }
+    
+    .slide-title {
+        font-size: 2rem;
+    }
+}
+
+/* Адаптивные стили для средних экранов (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .main-title {
+        font-size: 2.5rem;
+    }
+    
+    .slide-title {
+        font-size: 2.2rem;
+    }
+    
+    .hero-section {
+        padding: 35px 25px;
+    }
+    
+    .author {
+        font-size: 1.1rem;
+        padding: 14px 22px;
+    }
+    
+    /* Две колонки для некоторых секций */
+    .training-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .schedule-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .photo-placeholder {
+        height: 130px;
     }
 }
 
@@ -259,6 +460,8 @@ body::after {
     align-items: center;
     justify-content: center;
     background: radial-gradient(circle at top left, rgba(46, 125, 50, 0.1) 0%, transparent 50%), radial-gradient(circle at bottom right, rgba(27, 94, 32, 0.1) 0%, transparent 50%);
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .slide.active {
@@ -301,11 +504,15 @@ body::after {
     width: 100%;
     text-align: center;
     padding: 20px;
-    max-height: 100%;
-    overflow: hidden;
+    max-height: none;
+    overflow: visible;
     animation: slideIn 0.8s ease-out;
     position: relative;
     z-index: 10;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 @keyframes slideIn {
@@ -1999,9 +2206,9 @@ blockquote::before {
 }
 
 .info-card:hover {
-    transform: translateY(-5px) scale(1.02);
+    transform: translateY(-8px) scale(1.03);
     background: rgba(46, 125, 50, 0.3);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
     border-color: rgba(129, 199, 132, 0.5);
 }
 
@@ -2015,8 +2222,55 @@ blockquote::before {
 
 .info-card p {
     font-size: 1rem;
-    line-height: 1.5;
+    line-height: 1.6;
     opacity: 0.9;
+    color: #ffffff;
+}
+
+/* QR-код плейсхолдер */
+.qr-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 50%, #81C784 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-center {
+    text-align: center;
+    z-index: 2;
+    position: relative;
+}
+
+.qr-center span {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.qr-center p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.qr-placeholder::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="10" y="10" width="20" height="20" fill="white" opacity="0.1"/><rect x="170" y="10" width="20" height="20" fill="white" opacity="0.1"/><rect x="10" y="170" width="20" height="20" fill="white" opacity="0.1"/><rect x="50" y="50" width="10" height="10" fill="white" opacity="0.2"/><rect x="140" y="50" width="10" height="10" fill="white" opacity="0.2"/><rect x="50" y="140" width="10" height="10" fill="white" opacity="0.2"/><rect x="80" y="80" width="40" height="40" fill="white" opacity="0.15"/></svg>') center/cover no-repeat;
+    z-index: 1;
 }
 
 .call-to-action {
