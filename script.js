@@ -1,456 +1,2808 @@
-// Презентация - JavaScript для навигации
-class Presentation {
-    constructor() {
-        this.currentSlide = 0;
-        this.slides = document.querySelectorAll('.slide');
-        this.totalSlides = this.slides.length; // Теперь будет 13 слайдов
-        this.isAnimating = false;
-        
-        this.init();
-    }
-    
-    init() {
-        // Инициализация событий
-        this.bindEvents();
-        
-        // Инициализация мобильной навигации
-        this.initMobileNavigation();
-        
-        // Показать первый слайд
-        this.showSlide(0);
-        
-        // Автозапуск анимаций
-        this.startAnimations();
-    }
-    
-    bindEvents() {
-        // Клавиатурная навигация
-        document.addEventListener('keydown', (e) => {
-            if (this.isAnimating) return;
-            
-            switch(e.key) {
-                case 'ArrowLeft':
-                case 'ArrowUp':
-                    e.preventDefault();
-                    this.previousSlide();
-                    break;
-                case 'ArrowRight':
-                case 'ArrowDown':
-                case ' ': // Пробел
-                    e.preventDefault();
-                    this.nextSlide();
-                    break;
-                case 'Home':
-                    e.preventDefault();
-                    this.goToSlide(0);
-                    break;
-                case 'End':
-                    e.preventDefault();
-                    this.goToSlide(this.totalSlides - 1);
-                    break;
-            }
-        });
-        
-        // Колесо мыши
-        let wheelTimeout;
-        document.addEventListener('wheel', (e) => {
-            if (this.isAnimating) return;
-            
-            e.preventDefault();
-            clearTimeout(wheelTimeout);
-            wheelTimeout = setTimeout(() => {
-                if (e.deltaY > 0) {
-                    this.nextSlide();
-                } else {
-                    this.previousSlide();
-                }
-            }, 50);
-        }, { passive: false });
-        
-        // Свайпы на мобильных устройствах с улучшенной обработкой
-        let startX = 0;
-        let startY = 0;
-        let isVerticalScroll = false;
-        let startTime = 0;
-        
-        document.addEventListener('touchstart', (e) => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-            startTime = Date.now();
-            isVerticalScroll = false;
-        }, { passive: true });
-        
-        document.addEventListener('touchmove', (e) => {
-            if (!startX || !startY) return;
-            
-            // Проверяем, если касание на ссылке или кнопке, не блокируем
-            const target = e.target.closest('a, button');
-            if (target) return;
-            
-            const diffX = startX - e.touches[0].clientX;
-            const diffY = startY - e.touches[0].clientY;
-            
-            // Определяем направление свайпа
-            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
-                isVerticalScroll = true;
-            }
-            
-            // Предотвращаем скролл только для горизонтальных свайпов
-            if (!isVerticalScroll && Math.abs(diffX) > 30) {
-                // Проверяем, что слайд не прокручивается
-                const currentSlide = this.slides[this.currentSlide];
-                const isAtTop = currentSlide.scrollTop === 0;
-                const isAtBottom = currentSlide.scrollTop + currentSlide.clientHeight >= currentSlide.scrollHeight - 10;
-                
-                // Предотвращаем дефолтное поведение только если можно переключать слайды
-                if ((diffX > 0 && isAtBottom) || (diffX < 0 && isAtTop)) {
-                    e.preventDefault();
-                }
-            }
-        }, { passive: false });
-        
-        document.addEventListener('touchend', (e) => {
-            if (this.isAnimating) return;
-            
-            // Проверяем, если касание на ссылке или кнопке, не обрабатываем свайпы
-            const target = e.target.closest('a, button');
-            if (target) {
-                // Сбрасываем значения и выходим
-                startX = 0;
-                startY = 0;
-                startTime = 0;
-                isVerticalScroll = false;
-                return;
-            }
-            
-            const endX = e.changedTouches[0].clientX;
-            const endY = e.changedTouches[0].clientY;
-            const diffX = startX - endX;
-            const diffY = startY - endY;
-            const timeDiff = Date.now() - startTime;
-            
-            // Проверяем, что это быстрый горизонтальный свайп
-            if (!isVerticalScroll && 
-                Math.abs(diffX) > Math.abs(diffY) && 
-                Math.abs(diffX) > 80 && 
-                timeDiff < 500) {
-                
-                const currentSlide = this.slides[this.currentSlide];
-                const isAtTop = currentSlide.scrollTop === 0;
-                const isAtBottom = currentSlide.scrollTop + currentSlide.clientHeight >= currentSlide.scrollHeight - 10;
-                
-                if (diffX > 0 && isAtBottom) {
-                    this.nextSlide();
-                } else if (diffX < 0 && isAtTop) {
-                    this.previousSlide();
-                }
-            }
-            
-            // Сброс значений
-            startX = 0;
-            startY = 0;
-            startTime = 0;
-            isVerticalScroll = false;
-        }, { passive: true });
-        
-        // Обработчик для ссылок Twitch
-        document.addEventListener('click', (e) => {
-            const twitchLink = e.target.closest('a[href*="twitch.tv"]');
-            if (twitchLink) {
-                // Добавляем визуальную обратную связь
-                twitchLink.style.transform = 'scale(0.95)';
-                setTimeout(() => {
-                    twitchLink.style.transform = '';
-                }, 150);
-                
-                // Вибрация для мобильных устройств
-                if (navigator.vibrate) {
-                    navigator.vibrate(100);
-                }
-            }
-        });
-    }
-    
-    showSlide(index) {
-        if (this.isAnimating || index === this.currentSlide) return;
-        
-        this.isAnimating = true;
-        
-        // Убираем активный класс с текущего слайда
-        this.slides[this.currentSlide].classList.remove('active');
-        
-        // Обновляем индекс
-        this.currentSlide = index;
-        
-        // Сбрасываем прокрутку нового слайда наверх
-        this.slides[this.currentSlide].scrollTop = 0;
-        
-        // Добавляем активный класс новому слайду
-        setTimeout(() => {
-            this.slides[this.currentSlide].classList.add('active');
-            
-            // Запускаем анимации для нового слайда
-            this.animateSlideContent();
-            
-            setTimeout(() => {
-                this.isAnimating = false;
-                // Обновляем индикатор мобильной навигации
-                this.updateSlideIndicator();
-            }, 800);
-        }, 50);
-    }
-    
-    nextSlide() {
-        const nextIndex = (this.currentSlide + 1) % this.totalSlides;
-        this.showSlide(nextIndex);
-        // Вибрация для мобильных устройств
-        if (navigator.vibrate) {
-            navigator.vibrate(50);
-        }
-    }
-    
-    previousSlide() {
-        const prevIndex = (this.currentSlide - 1 + this.totalSlides) % this.totalSlides;
-        this.showSlide(prevIndex);
-        // Вибрация для мобильных устройств
-        if (navigator.vibrate) {
-            navigator.vibrate(50);
-        }
-    }
-    
-    goToSlide(index) {
-        if (index >= 0 && index < this.totalSlides) {
-            this.showSlide(index);
-        }
-    }
-    
-    animateSlideContent() {
-        const currentSlideElement = this.slides[this.currentSlide];
-        const elements = currentSlideElement.querySelectorAll('.card-base, .photo-card, .responsibility-item, .training-card, .event-card, .month-event, .training-category, .info-card');
-        
-        elements.forEach((element, index) => {
-            element.style.opacity = '0';
-            element.style.transform = 'translateY(30px)';
-            
-            setTimeout(() => {
-                element.style.transition = 'all 0.6s ease';
-                element.style.opacity = '1';
-                element.style.transform = 'translateY(0)';
-            }, index * 100 + 200);
-        });
-    }
-    
-    initMobileNavigation() {
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        if (prevBtn && nextBtn) {
-            prevBtn.addEventListener('click', () => {
-                if (!this.isAnimating) this.previousSlide();
-            });
-            
-            nextBtn.addEventListener('click', () => {
-                if (!this.isAnimating) this.nextSlide();
-            });
-        }
-        
-        // Обновляем индикатор
-        this.updateSlideIndicator();
-    }
-    
-    updateSlideIndicator() {
-        const currentSlideElement = document.getElementById('currentSlide');
-        if (currentSlideElement) {
-            currentSlideElement.textContent = this.currentSlide + 1;
-        }
-        
-        // Обновляем состояние кнопок
-        const prevBtn = document.getElementById('prevBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        
-        if (prevBtn) {
-            prevBtn.disabled = this.currentSlide === 0;
-        }
-        
-        if (nextBtn) {
-            nextBtn.disabled = this.currentSlide === this.totalSlides - 1;
-        }
-    }
-    
-    startAnimations() {
-        // Анимация плавающих элементов
-        const floatingElements = document.querySelectorAll('.element');
-        floatingElements.forEach((element, index) => {
-            element.style.animationDelay = `${index * 0.5}s`;
-        });
-        
-        // Анимация появления контента первого слайда
-        setTimeout(() => {
-            this.animateSlideContent();
-        }, 500);
-    }
+/* Сброс стилей и базовые настройки */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
-// Инициализация при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    const presentation = new Presentation();
-    
-    // Добавляем индикатор загрузки
-    const loader = document.createElement('div');
-    loader.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #2d5a27 0%, #4a7c59 50%, #6b8e23 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-        transition: opacity 0.5s ease;
-    `;
-    
-    loader.innerHTML = `
-        <div class="loading-indicator" style="
-            color: white;
-            font-size: 1.2rem;
-            font-weight: 300;
-            animation: pulse 2s ease-in-out infinite;
-            text-align: center;
-            max-width: 80%;
-        ">
-            <div style="font-size: 3rem; margin-bottom: 20px;">🌱</div>
-            <div style="margin-bottom: 10px;">Загрузка презентации...</div>
-            <div style="font-size: 0.9rem; opacity: 0.8;">Оптимизация для мобильных устройств...</div>
-        </div>
-    `;
-    
-    document.body.appendChild(loader);
-    
-    // Убираем загрузчик через 1.5 секунды
-    setTimeout(() => {
-        loader.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(loader);
-        }, 500);
-    }, 1500);
-});
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #0d3d2a 0%, #1a4d3a 25%, #2d6b4f 50%, #1a4d3a 75%, #0f3d2c 100%);
+    min-height: 100vh;
+    overflow: hidden;
+    color: #ffffff;
+    position: relative;
+}
 
-// CSS анимации через JavaScript
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes pulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.7; transform: scale(1.05); }
-    }
-`;
-document.head.appendChild(style);
+/* Фоновый паттерн в стиле Политеха */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(45deg, rgba(46, 125, 50, 0.1) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(46, 125, 50, 0.1) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(27, 94, 32, 0.1) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(27, 94, 32, 0.1) 75%);
+    background-size: 60px 60px;
+    background-position: 0 0, 0 30px, 30px -30px, -30px 0px;
+    animation: backgroundMove 30s ease-in-out infinite;
+    z-index: -2;
+    opacity: 0.3;
+}
 
-// Показываем подсказку по управлению
-setTimeout(() => {
-    const hint = document.createElement('div');
-    hint.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: rgba(45, 90, 39, 0.9);
-        backdrop-filter: blur(10px);
-        color: white;
-        padding: 15px 20px;
-        border-radius: 15px;
-        font-size: 14px;
-        z-index: 1000;
+@keyframes backgroundMove {
+    0%, 100% { transform: translateX(0) translateY(0); }
+    25% { transform: translateX(-10px) translateY(-5px); }
+    50% { transform: translateX(10px) translateY(5px); }
+    75% { transform: translateX(-5px) translateY(10px); }
+}
+
+/* Логотип СПбПУ в фоне */
+body::after {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><circle cx="100" cy="100" r="90" fill="none" stroke="%232E7D32" stroke-width="3" opacity="0.08"/><circle cx="100" cy="100" r="70" fill="none" stroke="%234CAF50" stroke-width="2" opacity="0.06"/><text x="100" y="85" text-anchor="middle" fill="%232E7D32" font-size="16" font-family="Arial" font-weight="bold" opacity="0.05">СПбПУ</text><text x="100" y="105" text-anchor="middle" fill="%232E7D32" font-size="12" font-family="Arial" opacity="0.05">ПОЛИТЕХ</text><text x="100" y="125" text-anchor="middle" fill="%232E7D32" font-size="10" font-family="Arial" opacity="0.05">1899</text></svg>') center/contain no-repeat;
+    animation: logoRotate 120s linear infinite;
+    z-index: -1;
+    opacity: 0.03;
+}
+
+@keyframes logoRotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Контейнер презентации */
+.presentation-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Мобильная навигация */
+.mobile-navigation {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    align-items: center;
+    gap: 20px;
+    background: rgba(46, 125, 50, 0.95);
+    backdrop-filter: blur(25px);
+    border-radius: 50px;
+    padding: 15px 25px;
+    border: 2px solid rgba(76, 175, 80, 0.4);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    animation: navSlideUp 0.8s ease-out;
+}
+
+@keyframes navSlideUp {
+    from {
         opacity: 0;
-        transition: opacity 0.5s ease;
-        border: 1px solid rgba(144, 238, 144, 0.3);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-    `;
-    
-    hint.innerHTML = `
-        <div style="font-weight: 600; margin-bottom: 8px; color: #90EE90;">Управление:</div>
-        <div>👆 Свайпы влево/вправо</div>
-        <div>← → стрелки</div>
-        <div>🖱️ колесико мыши</div>
-        <div>Пробел - следующий слайд</div>
-    `;
-    
-    document.body.appendChild(hint);
-    
-    // Показываем подсказку
-    setTimeout(() => {
-        hint.style.opacity = '1';
-    }, 100);
-    
-    // Скрываем через 6 секунд
-    setTimeout(() => {
-        hint.style.opacity = '0';
-        setTimeout(() => {
-            document.body.removeChild(hint);
-        }, 500);
-    }, 6000);
-}, 2500);
-
-// Мобильная подсказка о свайпах
-if (window.innerWidth <= 768) {
-    setTimeout(() => {
-        const mobileHint = document.createElement('div');
-        mobileHint.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(46, 125, 50, 0.95);
-            backdrop-filter: blur(15px);
-            color: white;
-            padding: 25px 30px;
-            border-radius: 20px;
-            font-size: 18px;
-            text-align: center;
-            z-index: 2000;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            border: 2px solid rgba(129, 199, 132, 0.4);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
-            max-width: 90%;
-        `;
-        
-        mobileHint.innerHTML = `
-            <div style="font-size: 2.5rem; margin-bottom: 15px;">👆</div>
-            <div style="font-weight: 600; margin-bottom: 10px; color: #90EE90;">Навигация на мобильном</div>
-            <div style="margin-bottom: 8px; font-size: 16px;">📱 Прокрутка вверх/вниз - чтение слайда</div>
-            <div style="margin-bottom: 8px; font-size: 16px;">👈👉 Свайп влево/вправо - смена слайдов</div>
-            <div style="margin-bottom: 15px; font-size: 16px;">🔽 Кнопки внизу экрана</div>
-            <div style="font-size: 12px; opacity: 0.8;">Проведите до конца слайда, затем свайп для перехода</div>
-        `;
-        
-        document.body.appendChild(mobileHint);
-        
-        // Показываем подсказку
-        setTimeout(() => {
-            mobileHint.style.opacity = '1';
-        }, 100);
-        
-        // Скрываем по клику или через 5 секунд
-        const hideMobileHint = () => {
-            mobileHint.style.opacity = '0';
-            setTimeout(() => {
-                if (document.body.contains(mobileHint)) {
-                    document.body.removeChild(mobileHint);
-                }
-            }, 500);
-        };
-        
-        mobileHint.addEventListener('click', hideMobileHint);
-        setTimeout(hideMobileHint, 5000);
-    }, 3000);
+        transform: translateX(-50%) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
 }
 
-// Обработка изменения размера окна
-window.addEventListener('resize', () => {
-    // Пересчитываем позиции элементов при изменении размера
-    const elements = document.querySelectorAll('.element');
-    elements.forEach(element => {
-        element.style.transform = 'translate(0, 0)';
-    });
-});
+.nav-btn {
+    background: rgba(76, 175, 80, 0.8);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid rgba(129, 199, 132, 0.4);
+}
+
+.nav-btn:hover {
+    background: rgba(129, 199, 132, 0.9);
+    transform: scale(1.1);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.nav-btn:active {
+    transform: scale(0.95);
+}
+
+.nav-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: scale(1);
+}
+
+.nav-icon {
+    color: #ffffff;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.slide-indicator {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 16px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    min-width: 60px;
+    justify-content: center;
+}
+
+.current-slide {
+    color: #81C784;
+    font-size: 18px;
+}
+
+.slide-separator {
+    opacity: 0.7;
+    margin: 0 2px;
+}
+
+.total-slides {
+    opacity: 0.8;
+}
+
+/* Универсальная мобильная оптимизация для всех устройств */
+@media screen and (max-width: 768px), 
+       screen and (max-device-width: 768px),
+       screen and (orientation: portrait) {
+    /* Принудительная темная тема для ВСЕХ мобильных устройств */
+    html, body {
+        background: #0d3d2a !important;
+        background-color: #0d3d2a !important;
+        color: #ffffff !important;
+        min-height: 100vh !important;
+        overflow-x: hidden !important;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #0d3d2a 0%, #1a4d3a 25%, #2d6b4f 50%, #1a4d3a 75%, #0f3d2c 100%) !important;
+    }
+    
+    /* Универсальные правила для всех текстов */
+    *, *::before, *::after {
+        color: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Заголовки */
+    h1, h2, h3, h4, h5, h6, .slide-title, .main-title {
+        color: #ffffff !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+        font-weight: bold !important;
+    }
+    
+    /* Подзаголовки и акценты */
+    .slide-title::after,
+    .main-title::after {
+        background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%) !important;
+    }
+    
+    /* Контейнер презентации */
+    .presentation-container {
+        width: 100% !important;
+        height: 100vh !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    /* Слайды - универсальная настройка */
+    .slides-wrapper {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: calc(100vh - 80px) !important;
+        margin: 0 !important;
+        margin-bottom: 80px !important;
+        padding: 0 !important;
+    }
+    
+    .slide {
+        width: 100% !important;
+        height: calc(100vh - 80px) !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        align-items: flex-start !important;
+        justify-content: flex-start !important;
+    }
+    
+    .slide-content {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 8px !important;
+        margin: 0 !important;
+        min-height: auto !important;
+        height: auto !important;
+        box-sizing: border-box !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+    }
+    
+    /* Прокрутка для мобильных */
+    .slide::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .slide::-webkit-scrollbar-track {
+        background: rgba(46, 125, 50, 0.1);
+        border-radius: 2px;
+    }
+    
+    .slide::-webkit-scrollbar-thumb {
+        background: rgba(76, 175, 80, 0.5);
+        border-radius: 2px;
+    }
+    
+    .slide::-webkit-scrollbar-thumb:hover {
+        background: rgba(76, 175, 80, 0.7);
+    }
+}
+
+/* Адаптация для очень маленьких экранов */
+@media (max-width: 480px) {
+    .mobile-navigation {
+        padding: 10px 15px !important;
+        bottom: 10px !important;
+        gap: 12px !important;
+        border-radius: 25px !important;
+        background: rgba(46, 125, 50, 0.95) !important;
+    }
+    
+    .nav-btn {
+        width: 40px !important;
+        height: 40px !important;
+        background: rgba(76, 175, 80, 0.9) !important;
+    }
+    
+    .nav-icon {
+        font-size: 18px !important;
+        color: #ffffff !important;
+    }
+    
+    .slide-indicator {
+        font-size: 13px !important;
+        color: #ffffff !important;
+    }
+    
+    .current-slide {
+        font-size: 15px !important;
+        color: #81C784 !important;
+    }
+    
+    /* Мобильная навигация */
+    .mobile-navigation {
+        display: flex !important;
+        position: fixed !important;
+        bottom: 10px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        background: rgba(13, 61, 42, 0.95) !important;
+        border: 2px solid rgba(76, 175, 80, 0.8) !important;
+        border-radius: 30px !important;
+        padding: 8px 15px !important;
+        gap: 10px !important;
+        z-index: 10000 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .nav-btn {
+        width: 36px !important;
+        height: 36px !important;
+        background: rgba(76, 175, 80, 0.9) !important;
+        border: none !important;
+        border-radius: 50% !important;
+        color: #ffffff !important;
+        font-size: 16px !important;
+        font-weight: bold !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .nav-btn:hover {
+        background: rgba(129, 199, 132, 0.9) !important;
+        transform: scale(1.1) !important;
+    }
+    
+    .slide-indicator {
+        color: #ffffff !important;
+        font-size: 12px !important;
+        font-weight: bold !important;
+        min-width: 40px !important;
+        text-align: center !important;
+    }
+    
+    .current-slide {
+        color: #4CAF50 !important;
+        font-size: 14px !important;
+    }
+    /* Универсальные размеры шрифтов */
+    .main-title {
+        font-size: 1.6rem !important;
+        margin-bottom: 12px !important;
+        line-height: 1.2 !important;
+        text-align: center !important;
+    }
+    
+    .slide-title {
+        font-size: 1.3rem !important;
+        margin-bottom: 12px !important;
+        line-height: 1.3 !important;
+        text-align: center !important;
+    }
+    
+    /* Главная секция */
+    .hero-section {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 15px 10px !important;
+        margin: 5px 0 !important;
+        border-radius: 15px !important;
+        background: rgba(13, 61, 42, 0.9) !important;
+        border: 2px solid rgba(76, 175, 80, 0.6) !important;
+        box-sizing: border-box !important;
+    }
+    
+    .authors {
+        gap: 6px !important;
+        margin-bottom: 12px !important;
+    }
+    
+    .author {
+        font-size: 0.85rem !important;
+        padding: 8px 12px !important;
+        border-radius: 12px !important;
+        background: rgba(46, 125, 50, 0.9) !important;
+        color: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        border: 1px solid rgba(76, 175, 80, 0.5) !important;
+        margin: 2px 0 !important;
+    }
+    
+    /* Универсальные правила для всех карточек и элементов */
+    .photo-card,
+    .responsibility-item,
+    .timing-section,
+    .trainings-section,
+    .training-card,
+    .meeting-goal,
+    .training-detail-card,
+    .event-card,
+    .month-event,
+    .training-category,
+    .info-card,
+    .prof-text,
+    .prof-documents,
+    .leader-description,
+    .fm-content,
+    .twitch-header,
+    .qr-container,
+    .call-to-action {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 8px !important;
+        margin: 4px 0 !important;
+        background: rgba(13, 61, 42, 0.95) !important;
+        border: 2px solid rgba(76, 175, 80, 0.7) !important;
+        border-radius: 12px !important;
+        box-sizing: border-box !important;
+        color: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    /* Все заголовки в карточках */
+    .info-card h3,
+    .info-card h4,
+    .training-card h4,
+    .responsibility-item h3,
+    .training-detail-card h3,
+    .event-card h3,
+    .month-event h3 {
+        font-size: 0.9rem !important;
+        margin-bottom: 4px !important;
+        color: #4CAF50 !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+        font-weight: bold !important;
+    }
+    
+    /* Все параграфы в карточках */
+    .info-card p,
+    .training-card p,
+    .responsibility-item p,
+    .training-detail-card p,
+    .event-card p,
+    .month-event p {
+        font-size: 0.75rem !important;
+        line-height: 1.3 !important;
+        color: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        margin-bottom: 4px !important;
+    }
+    
+    /* Универсальные сетки и лайауты */
+    .responsibilities-section,
+    .meeting-plan,
+    .training-details,
+    .schedule-grid,
+    .info-grid,
+    .promo-content,
+    .prof-section,
+    .remaining-events,
+    .picnic-trainings,
+    .informal-events {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    
+    /* Тайминги */
+    .timing-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+        padding: 12px 15px;
+    }
+    
+    .time,
+    .activity {
+        font-size: 0.85rem;
+    }
+    
+    /* Фото команды */
+    .photo-placeholder {
+        height: 120px;
+    }
+    
+    /* Меньше визуальные элементы */
+    .hero-visual {
+        height: 100px;
+        margin-top: 20px;
+    }
+    
+    .element {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    /* Twitch слайд адаптация */
+    .twitch-promo {
+        padding: 15px;
+    }
+    
+    .promo-content {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .qr-container {
+        order: 2;
+    }
+    
+    .channel-info {
+        order: 1;
+    }
+    
+    .qr-code {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.4rem;
+    }
+    
+    .channel-name {
+        font-size: 1.1rem;
+    }
+    
+    .info-card h4 {
+        font-size: 1rem;
+    }
+    
+    .info-card p {
+        font-size: 0.85rem;
+    }
+}
+
+/* Для ландшафтной ориентации */
+@media (max-width: 768px) and (orientation: landscape) {
+    .mobile-navigation {
+        bottom: 10px;
+        padding: 10px 20px;
+    }
+    
+    .slides-wrapper {
+        margin-bottom: 80px;
+        height: calc(100vh - 80px);
+    }
+    
+    .slide-content {
+        min-height: calc(100vh - 120px);
+    }
+    
+    .main-title {
+        font-size: 2.2rem;
+    }
+    
+    .slide-title {
+        font-size: 2rem;
+    }
+}
+
+/* Адаптивные стили для средних экранов (481px - 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .main-title {
+        font-size: 2.5rem;
+    }
+    
+    .slide-title {
+        font-size: 2.2rem;
+    }
+    
+    .hero-section {
+        padding: 35px 25px;
+    }
+    
+    .author {
+        font-size: 1.1rem;
+        padding: 14px 22px;
+    }
+    
+    /* Две колонки для некоторых секций */
+    .training-details {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .schedule-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .photo-placeholder {
+        height: 130px;
+    }
+}
+
+/* Улучшение сенсорной области касания */
+.nav-btn {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+/* Индикатор загрузки для мобильных */
+@media (max-width: 768px) {
+    .loading-indicator {
+        font-size: 1.2rem;
+    }
+    
+    .loading-indicator div:first-child {
+        font-size: 2.5rem;
+    }
+}
+
+/* Навигация */
+.navigation {
+    display: none;
+}
+
+/* Слайды */
+.slides-wrapper {
+    position: relative;
+    width: 95%;
+    max-width: 1400px;
+    height: 95vh;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transform: translateX(100px) scale(0.95);
+    transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at top left, rgba(46, 125, 50, 0.1) 0%, transparent 50%), radial-gradient(circle at bottom right, rgba(27, 94, 32, 0.1) 0%, transparent 50%);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.slide.active {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+
+/* Логотип СПбПУ в нижнем правом углу каждого слайда */
+.slide::after {
+    content: '';
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="rgba(46,125,50,0.9)"/><circle cx="40" cy="40" r="35" fill="none" stroke="white" stroke-width="2"/><circle cx="40" cy="40" r="28" fill="none" stroke="white" stroke-width="2"/><text x="40" y="35" text-anchor="middle" fill="white" font-size="10" font-family="Arial" font-weight="bold">СПбПУ</text><text x="40" y="48" text-anchor="middle" fill="white" font-size="8" font-family="Arial" font-weight="bold">ПОЛИТЕХ</text><text x="40" y="58" text-anchor="middle" fill="white" font-size="8" font-family="Arial">1899</text></svg>') center/contain no-repeat;
+    z-index: 1000;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+    animation: logoAppear 1s ease-out 0.5s both;
+}
+
+@keyframes logoAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.5) rotate(-180deg);
+    }
+    to {
+        opacity: 0.8;
+        transform: scale(1) rotate(0deg);
+    }
+}
+
+.slide:hover::after {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.slide-content {
+    width: 100%;
+    text-align: center;
+    padding: 20px;
+    max-height: none;
+    overflow: visible;
+    animation: slideIn 0.8s ease-out;
+    position: relative;
+    z-index: 10;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Титульный слайд в стиле Политеха */
+.hero-section {
+    position: relative;
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.2) 0%, rgba(27, 94, 32, 0.15) 100%), rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(30px);
+    border-radius: 30px;
+    padding: 50px 40px;
+    border: 3px solid rgba(46, 125, 50, 0.4);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px rgba(46, 125, 50, 0.2);
+    animation: heroGlow 4s ease-in-out infinite alternate;
+    overflow: hidden;
+}
+
+/* Большая эмблема СПбПУ в углу титульного слайда */
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 120px;
+    height: 120px;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><circle cx="60" cy="60" r="55" fill="rgba(46,125,50,0.3)"/><circle cx="60" cy="60" r="50" fill="none" stroke="white" stroke-width="2" opacity="0.7"/><circle cx="60" cy="60" r="40" fill="none" stroke="white" stroke-width="2" opacity="0.7"/><text x="60" y="50" text-anchor="middle" fill="white" font-size="14" font-family="Arial" font-weight="bold" opacity="0.8">СПбПУ</text><text x="60" y="68" text-anchor="middle" fill="white" font-size="11" font-family="Arial" font-weight="bold" opacity="0.8">ПОЛИТЕХ</text><text x="60" y="82" text-anchor="middle" fill="white" font-size="10" font-family="Arial" opacity="0.7">1899</text></svg>') center/contain no-repeat;
+    opacity: 0.4;
+    animation: emblemPulse 3s ease-in-out infinite;
+    z-index: 1;
+}
+
+@keyframes emblemPulse {
+    0%, 100% { opacity: 0.4; transform: scale(1) rotate(0deg); }
+    50% { opacity: 0.7; transform: scale(1.05) rotate(2deg); }
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(from 0deg, transparent, rgba(46, 125, 50, 0.1), transparent);
+    animation: rotate 20s linear infinite;
+    z-index: -1;
+}
+
+@keyframes heroGlow {
+    from {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 40px rgba(46, 125, 50, 0.2);
+    }
+    to {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 60px rgba(76, 175, 80, 0.4);
+    }
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.main-title {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 700;
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #ffffff 0%, #81C784 50%, #4CAF50 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1.1;
+    animation: titlePulse 3s ease-in-out infinite alternate;
+    text-shadow: 0 0 30px rgba(76, 175, 80, 0.5);
+    position: relative;
+    z-index: 2;
+}
+
+.main-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 4px;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 50%, #81C784 100%);
+    border-radius: 2px;
+    animation: underlineGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes titlePulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.03); }
+}
+
+@keyframes underlineGlow {
+    from { box-shadow: 0 0 10px rgba(46, 125, 50, 0.5); }
+    to { box-shadow: 0 0 20px rgba(76, 175, 80, 0.8); }
+}
+
+.authors {
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+    z-index: 2;
+}
+
+.author {
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    font-weight: 500;
+    opacity: 0.95;
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.3) 0%, rgba(27, 94, 32, 0.2) 100%), rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    padding: 15px 25px;
+    border-radius: 25px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    transition: all 0.4s ease;
+    animation: authorSlide 0.8s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.author::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.author:hover::before {
+    left: 100%;
+}
+
+.author:nth-child(1) { animation-delay: 0.2s; }
+.author:nth-child(2) { animation-delay: 0.4s; }
+
+@keyframes authorSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 0.95;
+        transform: translateX(0);
+    }
+}
+
+.author:hover {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.4) 0%, rgba(27, 94, 32, 0.3) 100%), rgba(255, 255, 255, 0.15);
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 10px 25px rgba(76, 175, 80, 0.4);
+    border-color: rgba(129, 199, 132, 0.5);
+}
+
+.hero-visual {
+    position: relative;
+    height: 150px;
+    margin-top: 30px;
+    z-index: 2;
+}
+
+.floating-elements {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.element {
+    position: absolute;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.4) 0%, rgba(46, 125, 50, 0.2) 100%), rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px);
+    border: 2px solid rgba(129, 199, 132, 0.3);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.3);
+}
+
+.element-1 {
+    width: 100px;
+    height: 100px;
+    top: 20px;
+    left: 20%;
+    animation: float 8s ease-in-out infinite;
+}
+
+.element-2 {
+    width: 80px;
+    height: 80px;
+    top: 50px;
+    right: 25%;
+    animation: float 6s ease-in-out infinite reverse;
+}
+
+.element-3 {
+    width: 90px;
+    height: 90px;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: float 7s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    33% { transform: translateY(-15px) rotate(3deg); }
+    66% { transform: translateY(-8px) rotate(-2deg); }
+}
+
+/* Заголовки слайдов в стиле Политеха */
+.slide-title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 600;
+    margin-bottom: 30px;
+    background: linear-gradient(135deg, #ffffff 0%, #81C784 50%, #4CAF50 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    animation: titleAppear 0.8s ease-out;
+}
+
+@keyframes titleAppear {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 50%, #81C784 100%);
+    border-radius: 2px;
+    animation: underlineGrow 1s ease-out 0.3s both;
+}
+
+@keyframes underlineGrow {
+    from { width: 0; }
+    to { width: 120px; }
+}
+
+/* Базовые карточки в стиле Политеха */
+.card-base {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.2) 0%, rgba(27, 94, 32, 0.15) 100%), rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 25px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 20px rgba(46, 125, 50, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-base::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.card-base:hover::before {
+    left: 100%;
+}
+
+.card-base:hover {
+    transform: translateY(-10px) scale(1.02);
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.3) 0%, rgba(27, 94, 32, 0.25) 100%), rgba(255, 255, 255, 0.12);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25), 0 0 40px rgba(76, 175, 80, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: rgba(129, 199, 132, 0.5);
+}
+
+/* Применяем стили ко всем карточкам */
+.photo-card,
+.responsibility-item,
+.timing-section,
+.trainings-section,
+.training-card,
+.meeting-goal,
+.training-detail-card,
+.event-card,
+.month-event,
+.training-category,
+.info-card,
+.prof-text,
+.prof-documents,
+.leader-description,
+.fm-content {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.2) 0%, rgba(27, 94, 32, 0.15) 100%), rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(25px);
+    border-radius: 25px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 20px rgba(46, 125, 50, 0.1);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.photo-card::before,
+.responsibility-item::before,
+.timing-section::before,
+.trainings-section::before,
+.training-card::before,
+.meeting-goal::before,
+.training-detail-card::before,
+.event-card::before,
+.month-event::before,
+.training-category::before,
+.info-card::before,
+.prof-text::before,
+.prof-documents::before,
+.leader-description::before,
+.fm-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.photo-card:hover::before,
+.responsibility-item:hover::before,
+.timing-section:hover::before,
+.trainings-section:hover::before,
+.training-card:hover::before,
+.meeting-goal:hover::before,
+.training-detail-card:hover::before,
+.event-card:hover::before,
+.month-event:hover::before,
+.training-category:hover::before,
+.info-card:hover::before,
+.prof-text:hover::before,
+.prof-documents:hover::before,
+.leader-description:hover::before,
+.fm-content:hover::before {
+    left: 100%;
+}
+
+.photo-card:hover,
+.responsibility-item:hover,
+.timing-section:hover,
+.trainings-section:hover,
+.training-card:hover,
+.meeting-goal:hover,
+.training-detail-card:hover,
+.event-card:hover,
+.month-event:hover,
+.training-category:hover,
+.info-card:hover,
+.prof-text:hover,
+.prof-documents:hover,
+.leader-description:hover,
+.fm-content:hover {
+    transform: translateY(-10px) scale(1.02);
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.3) 0%, rgba(27, 94, 32, 0.25) 100%), rgba(255, 255, 255, 0.12);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25), 0 0 40px rgba(76, 175, 80, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: rgba(129, 199, 132, 0.5);
+}
+
+/* Распределение обязанностей */
+.responsibilities-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.team-photos {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.photo-card {
+    padding: 20px;
+    text-align: center;
+    animation: cardSlideUp 0.8s ease-out;
+}
+
+.photo-card:nth-child(1) { animation-delay: 0.1s; }
+.photo-card:nth-child(2) { animation-delay: 0.2s; }
+
+@keyframes cardSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.photo-placeholder {
+    width: 100%;
+    height: 150px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: 2px solid rgba(76, 175, 80, 0.4);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.team-photo-1 {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150"><rect fill="%232E7D32" width="200" height="150"/><circle cx="100" cy="75" r="40" fill="none" stroke="white" stroke-width="3"/><text x="100" y="65" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">СПбПУ</text><text x="100" y="85" text-anchor="middle" fill="white" font-size="10" font-family="Arial">Команда</text></svg>');
+}
+
+.team-photo-2 {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)), url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 150"><rect fill="%234CAF50" width="200" height="150"/><circle cx="100" cy="75" r="40" fill="none" stroke="white" stroke-width="3"/><text x="100" y="65" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">ПОЛИТЕХ</text><text x="100" y="85" text-anchor="middle" fill="white" font-size="10" font-family="Arial">Адаптеры</text></svg>');
+}
+
+.photo-placeholder:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 25px rgba(76, 175, 80, 0.5);
+}
+
+.responsibilities-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.responsibility-item {
+    padding: 25px;
+    text-align: left;
+    animation: cardSlideUp 0.8s ease-out;
+}
+
+.responsibility-item:nth-child(1) { animation-delay: 0.2s; }
+.responsibility-item:nth-child(2) { animation-delay: 0.3s; }
+.responsibility-item:nth-child(3) { animation-delay: 0.4s; }
+
+.responsibility-item h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #81C784;
+    text-shadow: 0 0 10px rgba(129, 199, 132, 0.3);
+}
+
+.responsibility-item p {
+    font-size: 1rem;
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.highlight {
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+    padding: 3px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(46, 125, 50, 0.5);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* План встречи в стиле Политеха */
+.meeting-plan {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.timing-section,
+.trainings-section {
+    padding: 30px;
+    animation: slideInLeft 0.8s ease-out;
+}
+
+.trainings-section {
+    animation: slideInRight 0.8s ease-out;
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.timing-section h3,
+.trainings-section h3 {
+    font-size: 1.6rem;
+    margin-bottom: 25px;
+    text-align: center;
+    color: #81C784;
+    font-weight: 600;
+    text-shadow: 0 0 10px rgba(129, 199, 132, 0.3);
+    position: relative;
+}
+
+.timing-section h3::after,
+.trainings-section h3::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+    border-radius: 2px;
+}
+
+.timing-list,
+.training-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.timing-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    background: rgba(76, 175, 80, 0.15);
+    border-radius: 12px;
+    border-left: 4px solid #2E7D32;
+    transition: all 0.3s ease;
+    animation: itemFadeIn 0.6s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.timing-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(129, 199, 132, 0.2), transparent);
+    transition: left 0.4s ease;
+}
+
+.timing-item:hover::before {
+    left: 100%;
+}
+
+.timing-item:nth-child(n) { animation-delay: calc(n * 0.1s); }
+
+@keyframes itemFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.timing-item:hover {
+    background: rgba(76, 175, 80, 0.25);
+    transform: translateX(10px);
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+    border-left-color: #4CAF50;
+}
+
+.time {
+    font-weight: 600;
+    color: #81C784;
+    font-size: 0.9rem;
+    text-shadow: 0 0 5px rgba(129, 199, 132, 0.3);
+}
+
+.activity {
+    font-weight: 400;
+    opacity: 0.9;
+    font-size: 0.9rem;
+}
+
+.training-card {
+    padding: 20px;
+    margin-bottom: 15px;
+    animation: cardSlideUp 0.6s ease-out;
+    border-radius: 15px;
+    border: 2px solid rgba(129, 199, 132, 0.3);
+}
+
+.training-card:nth-child(n) { animation-delay: calc(n * 0.1s); }
+
+.training-card h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #81C784;
+    text-shadow: 0 0 5px rgba(129, 199, 132, 0.3);
+}
+
+.training-card p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.meeting-goal {
+    padding: 30px;
+    margin-top: 30px;
+    grid-column: 1 / -1;
+    animation: cardSlideUp 0.8s ease-out 0.5s both;
+}
+
+.meeting-goal p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    opacity: 0.95;
+    text-align: center;
+}
+
+/* Применяем стили Политеха ко всем остальным элементам */
+.training-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.training-detail-card,
+.event-card,
+.month-event,
+.training-category,
+.info-card,
+.prof-text,
+.prof-documents,
+.leader-description,
+.fm-content {
+    padding: 25px;
+    text-align: left;
+    animation: cardSlideUp 0.8s ease-out;
+}
+
+/* Заголовки в стиле Политеха */
+.training-detail-card h3,
+.event-card h3,
+.month-event h3,
+.training-category h3,
+.info-card h3,
+.event-title h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #81C784;
+    position: relative;
+    text-shadow: 0 0 10px rgba(129, 199, 132, 0.3);
+}
+
+.training-detail-card h3::after,
+.event-card h3::after,
+.month-event h3::after,
+.training-category h3::after,
+.info-card h3::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+    border-radius: 1px;
+}
+
+/* Изображения в стиле Политеха */
+.event-image {
+    width: 100%;
+    height: 150px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 15px 15px 0 0;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    border-bottom: none;
+}
+
+.politech-image {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 150"><rect fill="%232E7D32" width="350" height="150"/><circle cx="175" cy="75" r="50" fill="none" stroke="white" stroke-width="4"/><text x="175" y="60" text-anchor="middle" fill="white" font-size="14" font-family="Arial" font-weight="bold">СПбПУ</text><text x="175" y="90" text-anchor="middle" fill="white" font-size="12" font-family="Arial">Политехнический парк</text></svg>');
+}
+
+.park-image {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 150"><rect fill="%234CAF50" width="350" height="150"/><text x="175" y="80" text-anchor="middle" fill="white" font-size="16" font-family="Arial" font-weight="bold">🌳 Парк 300-летия 🌳</text></svg>');
+}
+
+.cinema-image {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 150"><rect fill="%236B8E23" width="350" height="150"/><text x="175" y="70" text-anchor="middle" fill="white" font-size="16" font-family="Arial" font-weight="bold">🎬 Ситимолл 🎬</text><text x="175" y="90" text-anchor="middle" fill="white" font-size="12" font-family="Arial">Формула Кино</text></svg>');
+}
+
+.loft-image {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%232E7D32" width="80" height="80"/><text x="40" y="45" text-anchor="middle" fill="white" font-size="12" font-family="Arial" font-weight="bold">ЛОФТ</text></svg>');
+}
+
+.museum-logo {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%234CAF50" width="80" height="80"/><text x="40" y="35" text-anchor="middle" fill="white" font-size="10" font-family="Arial" font-weight="bold">МАФ</text><text x="40" y="50" text-anchor="middle" fill="white" font-size="8" font-family="Arial">Арт и</text><text x="40" y="60" text-anchor="middle" fill="white" font-size="8" font-family="Arial">Факты</text></svg>');
+}
+
+.skating-image {
+    background: linear-gradient(135deg, rgba(46, 125, 50, 0.9), rgba(76, 175, 80, 0.7)),
+                url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80"><rect fill="%236B8E23" width="80" height="80"/><text x="40" y="50" text-anchor="middle" fill="white" font-size="20" font-family="Arial">⛸️</text></svg>');
+}
+
+/* Специальные элементы */
+blockquote {
+    background: rgba(76, 175, 80, 0.15);
+    border-left: 5px solid #2E7D32;
+    padding: 25px 30px;
+    margin: 20px 0;
+    border-radius: 0 20px 20px 0;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.6;
+    opacity: 0.95;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(46, 125, 50, 0.2);
+}
+
+blockquote::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    font-size: 4rem;
+    color: #81C784;
+    opacity: 0.3;
+}
+
+.leader-functions {
+    list-style: none;
+    padding-left: 0;
+}
+
+.leader-functions li {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 15px;
+    padding: 15px 20px;
+    background: rgba(76, 175, 80, 0.15);
+    border-radius: 12px;
+    border-left: 4px solid #2E7D32;
+    transition: all 0.3s ease;
+    position: relative;
+    animation: itemFadeIn 0.6s ease-out;
+}
+
+.leader-functions li:nth-child(n) { animation-delay: calc(n * 0.1s); }
+
+.leader-functions li:hover {
+    background: rgba(76, 175, 80, 0.25);
+    transform: translateX(10px);
+    border-left-color: #4CAF50;
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.leader-functions li::before {
+    content: '→';
+    position: absolute;
+    left: -15px;
+    color: #2E7D32;
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* Форс-мажоры с особым стилем */
+.fm-content {
+    text-align: center;
+    padding: 50px;
+}
+
+.fm-content::after {
+    content: '⚠️';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    opacity: 0.3;
+    animation: bounce 2s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-10px); }
+}
+
+.fm-content p {
+    font-size: 1.3rem;
+    line-height: 1.7;
+    opacity: 0.95;
+    margin-top: 40px;
+}
+
+/* Улучшенная мобильная версия */
+@media (max-width: 768px) {
+    /* Основные настройки для планшетов */
+    .slide::after {
+        width: 60px;
+        height: 60px;
+        bottom: 15px;
+        right: 15px;
+    }
+    
+    .hero-section::before {
+        width: 80px;
+        height: 80px;
+        top: 15px;
+        right: 15px;
+    }
+    
+    .slide-content {
+        padding: 15px;
+    }
+    
+    .responsibilities-section,
+    .meeting-plan,
+    .prof-section {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .schedule-grid,
+    .training-details,
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .hero-section {
+        padding: 30px 20px;
+    }
+    
+    .hero-visual {
+        height: 100px;
+    }
+    
+    .event-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    /* Twitch слайд - универсальная оптимизация */
+    .twitch-promo {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 8px !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
+    .twitch-header {
+        text-align: center !important;
+        padding: 12px 8px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .twitch-logo {
+        font-size: 1.8rem !important;
+        margin-bottom: 6px !important;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.1rem !important;
+        color: #ffffff !important;
+        margin-bottom: 8px !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+    }
+    
+    .channel-name {
+        font-size: 1.3rem !important;
+        color: #4CAF50 !important;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.9) !important;
+        display: block !important;
+        margin: 8px 0 !important;
+        text-decoration: none !important;
+        font-weight: bold !important;
+    }
+    
+    .channel-name:hover {
+        color: #81C784 !important;
+        transform: scale(1.02) !important;
+    }
+    
+    .promo-content {
+        flex-direction: column !important;
+        gap: 10px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .qr-container {
+        order: 1 !important;
+        text-align: center !important;
+        padding: 12px !important;
+    }
+    
+    .qr-code {
+        width: 90px !important;
+        height: 90px !important;
+        margin: 0 auto 8px !important;
+        border-radius: 8px !important;
+        border: 2px solid rgba(76, 175, 80, 0.8) !important;
+    }
+    
+    .qr-text {
+        font-size: 0.75rem !important;
+        color: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    .channel-info {
+        order: 2 !important;
+        gap: 6px !important;
+    }
+    
+    .call-to-action {
+        order: 3 !important;
+        text-align: center !important;
+        padding: 10px !important;
+        margin-top: 10px !important;
+    }
+    
+    .cta-button {
+        width: 100% !important;
+        padding: 10px 15px !important;
+        font-size: 0.9rem !important;
+        border-radius: 15px !important;
+        gap: 6px !important;
+        justify-content: center !important;
+        background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%) !important;
+        color: #ffffff !important;
+        text-decoration: none !important;
+        display: flex !important;
+        align-items: center !important;
+        margin-bottom: 8px !important;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    .cta-button:hover {
+        background: linear-gradient(135deg, #388E3C 0%, #66BB6A 100%) !important;
+        transform: scale(1.02) !important;
+    }
+    
+    .twitch-icon {
+        font-size: 1rem !important;
+    }
+    
+    .cta-text {
+        font-size: 0.7rem !important;
+        color: #ffffff !important;
+        opacity: 0.9 !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+        margin-top: 4px !important;
+    }
+    .twitch-promo {
+        padding: 10px !important;
+        max-width: 100% !important;
+    }
+    
+    .twitch-header {
+        padding: 15px !important;
+        margin-bottom: 15px !important;
+        text-align: center;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.3rem !important;
+        color: #81C784 !important;
+    }
+    
+    .channel-name {
+        font-size: 1.8rem !important;
+        display: block !important;
+        margin: 10px 0 !important;
+    }
+    
+    .promo-content {
+        grid-template-columns: 1fr !important;
+        gap: 15px !important;
+        margin-bottom: 20px;
+    }
+    
+    .qr-container {
+        order: 1;
+        text-align: center;
+        padding: 15px !important;
+    }
+    
+    .channel-info {
+        order: 2;
+        gap: 10px !important;
+    }
+    
+    .qr-code {
+        width: 120px !important;
+        height: 120px !important;
+        margin: 0 auto 10px !important;
+    }
+    
+    .qr-text {
+        font-size: 0.9rem !important;
+        color: #ffffff !important;
+    }
+    
+    .info-card h4 {
+        font-size: 1rem !important;
+        margin-bottom: 5px !important;
+        color: #81C784 !important;
+    }
+    
+    .info-card p {
+        font-size: 0.8rem !important;
+        line-height: 1.3 !important;
+        color: #ffffff !important;
+    }
+    
+    .call-to-action {
+        padding: 15px !important;
+        margin-top: 15px;
+    }
+    
+    .cta-button {
+        padding: 12px 20px !important;
+        font-size: 1rem !important;
+        gap: 8px !important;
+        width: 100% !important;
+        justify-content: center;
+    }
+    
+    .cta-text {
+        font-size: 0.8rem !important;
+        margin-top: 8px !important;
+        color: #ffffff !important;
+    }
+}
+
+/* Специальная версия для телефонов */
+@media (max-width: 480px) {
+    /* Принудительно темная тема */
+    body {
+        background: linear-gradient(135deg, #0d3d2a 0%, #1a4d3a 25%, #2d6b4f 50%, #1a4d3a 75%, #0f3d2c 100%) !important;
+        color: #ffffff !important;
+    }
+    
+    /* Контейнер и слайды */
+    .slides-wrapper {
+        width: 100% !important;
+        height: calc(100vh - 90px) !important;
+        margin-bottom: 90px;
+    }
+    
+    .slide {
+        height: calc(100vh - 90px) !important;
+        overflow-y: auto !important;
+        padding-top: 5px !important;
+    }
+    
+    .slide-content {
+        padding: 8px !important;
+        min-height: auto !important;
+        height: auto !important;
+    }
+    
+    /* Логотипы */
+    .slide::after {
+        width: 50px;
+        height: 50px;
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .hero-section::before {
+        width: 60px;
+        height: 60px;
+        top: 10px;
+        right: 10px;
+    }
+    
+    /* Заголовки */
+    .main-title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+    
+    .slide-title {
+        font-size: 1.5rem;
+        margin-bottom: 20px;
+    }
+    
+    .slide-title::after {
+        width: 80px;
+        height: 3px;
+    }
+    
+    /* Титульный слайд */
+    .hero-section {
+        padding: 20px 15px;
+        border-radius: 20px;
+    }
+    
+    .authors {
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    
+    .author {
+        padding: 12px 20px;
+        font-size: 1rem;
+        border-radius: 20px;
+    }
+    
+    .hero-visual {
+        height: 80px;
+        margin-top: 20px;
+    }
+    
+    .element-1, .element-2, .element-3 {
+        width: 60px;
+        height: 60px;
+    }
+    
+    /* Карточки */
+    .card-base,
+    .photo-card,
+    .responsibility-item,
+    .training-detail-card,
+    .event-card,
+    .month-event,
+    .training-category,
+    .info-card,
+    .prof-text,
+    .prof-documents,
+    .leader-description,
+    .fm-content {
+        padding: 15px;
+        border-radius: 20px;
+        margin-bottom: 15px;
+    }
+    
+    /* Фотографии команды */
+    .photo-placeholder {
+        height: 120px;
+        border-radius: 12px;
+    }
+    
+    /* План встречи */
+    .timing-section,
+    .trainings-section {
+        padding: 20px;
+    }
+    
+    .timing-section h3,
+    .trainings-section h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    
+    .timing-item {
+        padding: 12px 15px;
+        flex-direction: column;
+        text-align: center;
+        gap: 5px;
+    }
+    
+    .time {
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #4CAF50;
+    }
+    
+    .activity {
+        font-size: 0.8rem;
+    }
+    
+    .training-card {
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    
+    .training-card h4 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+    }
+    
+    .training-card p {
+        font-size: 0.85rem;
+        line-height: 1.4;
+    }
+    
+    /* Детали тренингов */
+    .training-detail-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .training-detail-card p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    
+    /* Расписание */
+    .event-image {
+        height: 120px;
+        border-radius: 12px 12px 0 0;
+    }
+    
+    .event-info {
+        padding: 15px;
+    }
+    
+    .event-info h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    
+    .event-details p {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    /* Неформальные мероприятия */
+    .event-section {
+        padding: 20px;
+    }
+    
+    .event-section h3 {
+        font-size: 1.3rem;
+        margin-bottom: 15px;
+    }
+    
+    .event-section p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    
+    .timing-info {
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 12px;
+    }
+    
+    .timing-info h4 {
+        font-size: 1rem;
+        margin-bottom: 10px;
+    }
+    
+    .timing-info li {
+        font-size: 0.85rem;
+        margin-bottom: 6px;
+        padding-left: 15px;
+    }
+    
+    /* Оставшиеся неформалки */
+    .month-event {
+        padding: 20px;
+    }
+    
+    .event-header {
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .loft-image,
+    .museum-logo,
+    .skating-image {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+    }
+    
+    .event-title h3 {
+        font-size: 1.3rem;
+        margin-bottom: 3px;
+    }
+    
+    .event-title h4 {
+        font-size: 1rem;
+    }
+    
+    /* Информация о неформалках */
+    .info-card h3 {
+        font-size: 1.2rem;
+        margin-bottom: 12px;
+    }
+    
+    .info-card p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+    }
+    
+    /* ПРОФ секция */
+    .prof-section {
+        gap: 20px;
+    }
+    
+    .prof-text {
+        padding: 20px;
+    }
+    
+    .prof-text p {
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    
+    blockquote {
+        padding: 15px 20px;
+        margin: 15px 0;
+        border-radius: 0 15px 15px 0;
+        font-size: 0.85rem;
+        line-height: 1.5;
+    }
+    
+    blockquote::before {
+        font-size: 3rem;
+        top: -5px;
+        left: 15px;
+    }
+    
+    /* Лидер группы */
+    .leader-description {
+        padding: 20px;
+    }
+    
+    .leader-intro {
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+    
+    .leader-description p {
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 15px;
+    }
+    
+    .leader-functions li {
+        font-size: 0.8rem;
+        line-height: 1.4;
+        margin-bottom: 10px;
+        padding: 12px 15px;
+        padding-left: 25px;
+        border-radius: 10px;
+    }
+    
+    .leader-functions li::before {
+        left: -12px;
+        font-size: 1rem;
+    }
+    
+    /* Форс-мажоры */
+    .fm-content {
+        padding: 30px 20px;
+    }
+    
+    .fm-content::after {
+        font-size: 2.5rem;
+        top: 15px;
+    }
+    
+    .fm-content p {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-top: 35px;
+    }
+    
+    /* Twitch слайд для телефонов */
+    .twitch-promo {
+        padding: 8px !important;
+    }
+    
+    .twitch-header {
+        padding: 12px !important;
+        margin-bottom: 15px !important;
+        border-radius: 15px !important;
+        background: rgba(46, 125, 50, 0.95) !important;
+    }
+    
+    .twitch-logo {
+        font-size: 2rem !important;
+        margin-bottom: 8px !important;
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.2rem !important;
+        margin-bottom: 8px !important;
+        color: #ffffff !important;
+    }
+    
+    .channel-name {
+        font-size: 1.4rem !important;
+        color: #81C784 !important;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    .channel-name:hover {
+        transform: scale(1.02) !important;
+    }
+    
+    .promo-content {
+        gap: 12px !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .qr-container {
+        padding: 12px !important;
+        border-radius: 15px !important;
+        background: rgba(46, 125, 50, 0.95) !important;
+    }
+    
+    .qr-code {
+        width: 100px !important;
+        height: 100px !important;
+        margin-bottom: 10px !important;
+        border-radius: 10px !important;
+    }
+    
+    .qr-text {
+        font-size: 0.8rem !important;
+        margin-top: 8px !important;
+        color: #ffffff !important;
+    }
+    
+    .channel-info {
+        gap: 8px !important;
+    }
+    
+    .info-card {
+        padding: 10px !important;
+        border-radius: 12px !important;
+        background: rgba(46, 125, 50, 0.95) !important;
+    }
+    
+    .info-card h4 {
+        font-size: 0.9rem !important;
+        margin-bottom: 4px !important;
+        color: #81C784 !important;
+    }
+    
+    .info-card p {
+        font-size: 0.75rem !important;
+        line-height: 1.2 !important;
+        color: #ffffff !important;
+    }
+    
+    .call-to-action {
+        padding: 12px !important;
+        border-radius: 15px !important;
+        background: rgba(46, 125, 50, 0.95) !important;
+    }
+    
+    .cta-button {
+        padding: 10px 18px !important;
+        font-size: 0.9rem !important;
+        border-radius: 20px !important;
+        margin-bottom: 10px !important;
+        gap: 6px !important;
+        width: 100% !important;
+        justify-content: center;
+        background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%) !important;
+        color: #ffffff !important;
+    }
+    
+    .twitch-icon {
+        font-size: 1rem !important;
+    }
+    
+    .cta-text {
+        font-size: 0.7rem !important;
+        color: #ffffff !important;
+        text-align: center;
+        opacity: 0.9;
+    }
+    
+    /* Обеспечиваем читаемость всех элементов */
+    .responsibility-item h3,
+    .training-detail-card h3,
+    .event-info h3,
+    .info-card h4 {
+        line-height: 1.3 !important;
+        color: #81C784 !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8) !important;
+    }
+    
+    .responsibility-item p,
+    .training-detail-card p,
+    .event-info p,
+    .training-card p,
+    .timing-item .activity,
+    .timing-item .time {
+        color: #ffffff !important;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.6) !important;
+    }
+    
+    /* Карточки с улучшенным контрастом */
+    .card-base,
+    .photo-card,
+    .responsibility-item,
+    .training-card,
+    .info-card {
+        background: rgba(46, 125, 50, 0.95) !important;
+        border: 2px solid rgba(76, 175, 80, 0.8) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    /* Улучшения для сенсорного управления */
+    .timing-item,
+    .training-card,
+    .info-card,
+    .cta-button {
+        min-height: 44px !important; /* Минимальный размер для касания */
+    }
+    
+    /* Оптимизация анимаций для мобильных */
+    .card-base:hover,
+    .photo-card:hover,
+    .responsibility-item:hover,
+    .training-card:hover,
+    .info-card:hover {
+        transform: translateY(-5px) scale(1.01);
+    }
+    
+    /* Скрытие сложных анимаций на мобильных */
+    .hero-section::after,
+    .presentation-container::after {
+        display: none;
+    }
+    
+    /* Упрощение фона для лучшей производительности */
+    body::before {
+        background-size: 40px 40px;
+        opacity: 0.2;
+    }
+    
+    body::after {
+        width: 400px;
+        height: 400px;
+        opacity: 0.02;
+    }
+}
+
+/* Очень маленькие экраны (iPhone SE и подобные) */
+@media (max-width: 375px) {
+    .main-title {
+        font-size: 1.8rem;
+    }
+    
+    .slide-title {
+        font-size: 1.3rem;
+    }
+    
+    .channel-name {
+        font-size: 1.5rem;
+    }
+    
+    .channel-name:hover {
+        transform: scale(1.02);
+    }
+    
+    .twitch-header h3 {
+        font-size: 1.3rem;
+    }
+    
+    .qr-code {
+        width: 100px;
+        height: 100px;
+    }
+    
+    .cta-button {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+    
+    .card-base,
+    .photo-card,
+    .responsibility-item,
+    .training-detail-card,
+    .event-card,
+    .month-event,
+    .training-category,
+    .info-card {
+        padding: 12px;
+    }
+}
+
+/* Ландшафтная ориентация на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+    .slides-wrapper {
+        height: 90vh;
+    }
+    
+    .slide-content {
+        padding: 10px;
+    }
+    
+    .hero-section {
+        padding: 20px 15px;
+    }
+    
+    .main-title {
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+    }
+    
+    .slide-title {
+        font-size: 1.4rem;
+        margin-bottom: 15px;
+    }
+    
+    .authors {
+        margin-bottom: 15px;
+    }
+    
+    .hero-visual {
+        height: 60px;
+        margin-top: 15px;
+    }
+}
+
+/* Частицы в стиле Политеха */
+.presentation-container::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20px 30px, rgba(76, 175, 80, 0.4), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(46, 125, 50, 0.3), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(129, 199, 132, 0.5), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(76, 175, 80, 0.4), transparent);
+    background-repeat: repeat;
+    background-size: 150px 100px;
+    animation: particleMove 25s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes particleMove {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(-100px); }
+}
+
+/* Дополнительные анимации в стиле Политеха */
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.shimmer-effect {
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.3), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 3s infinite;
+}
+
+/* Специальные эффекты для Политеха */
+.polytech-glow {
+    box-shadow: 0 0 20px rgba(46, 125, 50, 0.5);
+    animation: polytechGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes polytechGlow {
+    from { box-shadow: 0 0 20px rgba(46, 125, 50, 0.5); }
+    to { box-shadow: 0 0 30px rgba(76, 175, 80, 0.8); }
+}
+
+/* Twitch промо слайд */
+.twitch-promo {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.twitch-header {
+    text-align: center;
+    margin-bottom: 40px;
+    background: rgba(46, 125, 50, 0.2);
+    backdrop-filter: blur(25px);
+    border-radius: 25px;
+    padding: 30px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.twitch-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.twitch-header:hover::before {
+    left: 100%;
+}
+
+.twitch-logo {
+    font-size: 4rem;
+    margin-bottom: 15px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.twitch-header h3 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: #81C784;
+    text-shadow: 0 0 10px rgba(129, 199, 132, 0.3);
+}
+
+.channel-name {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #ffffff 0%, #81C784 50%, #4CAF50 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 0 20px rgba(76, 175, 80, 0.5);
+    animation: glow 2s ease-in-out infinite alternate;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    outline: none;
+    border: none;
+}
+
+.channel-name:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 30px rgba(76, 175, 80, 0.8);
+    filter: brightness(1.2);
+}
+
+@keyframes glow {
+    from { filter: brightness(1); }
+    to { filter: brightness(1.2); }
+}
+
+.promo-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.qr-container {
+    background: rgba(46, 125, 50, 0.2);
+    backdrop-filter: blur(25px);
+    border-radius: 25px;
+    padding: 30px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.qr-container:hover::before {
+    left: 100%;
+}
+
+.qr-container:hover {
+    transform: translateY(-10px) scale(1.05);
+    background: rgba(46, 125, 50, 0.3);
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+    border-color: rgba(129, 199, 132, 0.5);
+}
+
+.qr-code {
+    width: 200px;
+    height: 200px;
+    margin: 0 auto 20px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 3px solid rgba(76, 175, 80, 0.4);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(46, 125, 50, 0.3);
+    transition: all 0.3s ease;
+}
+
+.qr-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.qr-code:hover {
+    transform: scale(1.05);
+    box-shadow: 0 15px 35px rgba(46, 125, 50, 0.5);
+    border-color: rgba(129, 199, 132, 0.6);
+}
+
+/* Анимация сканирования */
+.qr-code::after {
+    content: '';
+    position: absolute;
+    top: 10%;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent);
+    animation: scanLine 2s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes scanLine {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+.qr-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #81C784;
+    text-shadow: 0 0 5px rgba(129, 199, 132, 0.3);
+    margin-top: 15px;
+}
+
+.channel-info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.info-card {
+    background: rgba(46, 125, 50, 0.2);
+    backdrop-filter: blur(25px);
+    border-radius: 20px;
+    padding: 25px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.info-card:hover::before {
+    left: 100%;
+}
+
+.info-card:hover {
+    transform: translateY(-8px) scale(1.03);
+    background: rgba(46, 125, 50, 0.3);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+    border-color: rgba(129, 199, 132, 0.5);
+}
+
+.info-card h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #81C784;
+    text-shadow: 0 0 5px rgba(129, 199, 132, 0.3);
+}
+
+.info-card p {
+    font-size: 1rem;
+    line-height: 1.6;
+    opacity: 0.9;
+    color: #ffffff;
+}
+
+/* QR-код плейсхолдер */
+.qr-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 50%, #81C784 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.qr-center {
+    text-align: center;
+    z-index: 2;
+    position: relative;
+}
+
+.qr-center span {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 10px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.qr-center p {
+    margin: 5px 0;
+    font-size: 0.9rem;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.qr-placeholder::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect x="10" y="10" width="20" height="20" fill="white" opacity="0.1"/><rect x="170" y="10" width="20" height="20" fill="white" opacity="0.1"/><rect x="10" y="170" width="20" height="20" fill="white" opacity="0.1"/><rect x="50" y="50" width="10" height="10" fill="white" opacity="0.2"/><rect x="140" y="50" width="10" height="10" fill="white" opacity="0.2"/><rect x="50" y="140" width="10" height="10" fill="white" opacity="0.2"/><rect x="80" y="80" width="40" height="40" fill="white" opacity="0.15"/></svg>') center/cover no-repeat;
+    z-index: 1;
+}
+
+.call-to-action {
+    text-align: center;
+    background: rgba(46, 125, 50, 0.2);
+    backdrop-filter: blur(25px);
+    border-radius: 25px;
+    padding: 40px;
+    border: 2px solid rgba(76, 175, 80, 0.3);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.call-to-action::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.call-to-action:hover::before {
+    left: 100%;
+}
+
+.cta-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    background: linear-gradient(135deg, #2E7D32 0%, #4CAF50 100%);
+    color: #ffffff;
+    padding: 20px 40px;
+    border-radius: 50px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 25px rgba(46, 125, 50, 0.4);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 20px;
+    text-decoration: none;
+    border: none;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.cta-button:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 15px 35px rgba(46, 125, 50, 0.6);
+    background: linear-gradient(135deg, #388E3C 0%, #66BB6A 100%);
+    text-decoration: none;
+    color: #ffffff;
+}
+
+.twitch-icon {
+    font-size: 1.6rem;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.cta-text {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    color: #81C784;
+    text-shadow: 0 0 5px rgba(129, 199, 132, 0.3);
+}
+
+.qr-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #2E7D32 25%, transparent 25%), 
+                linear-gradient(-45deg, #2E7D32 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #2E7D32 75%), 
+                linear-gradient(-45deg, transparent 75%, #2E7D32 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.qr-center {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+    color: #2E7D32;
+    font-weight: bold;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.qr-center span {
+    font-size: 2rem;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.qr-center p {
+    margin: 2px 0;
+    font-size: 0.9rem;
+}
