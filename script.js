@@ -71,10 +71,12 @@ class Presentation {
         let startX = 0;
         let startY = 0;
         let isVerticalScroll = false;
+        let startTime = 0;
         
         document.addEventListener('touchstart', (e) => {
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
+            startTime = Date.now();
             isVerticalScroll = false;
         }, { passive: true });
         
@@ -85,13 +87,21 @@ class Presentation {
             const diffY = startY - e.touches[0].clientY;
             
             // Определяем направление свайпа
-            if (Math.abs(diffY) > Math.abs(diffX)) {
+            if (Math.abs(diffY) > Math.abs(diffX) && Math.abs(diffY) > 10) {
                 isVerticalScroll = true;
             }
             
             // Предотвращаем скролл только для горизонтальных свайпов
             if (!isVerticalScroll && Math.abs(diffX) > 30) {
-                e.preventDefault();
+                // Проверяем, что слайд не прокручивается
+                const currentSlide = this.slides[this.currentSlide];
+                const isAtTop = currentSlide.scrollTop === 0;
+                const isAtBottom = currentSlide.scrollTop + currentSlide.clientHeight >= currentSlide.scrollHeight - 10;
+                
+                // Предотвращаем дефолтное поведение только если можно переключать слайды
+                if ((diffX > 0 && isAtBottom) || (diffX < 0 && isAtTop)) {
+                    e.preventDefault();
+                }
             }
         }, { passive: false });
         
@@ -102,12 +112,21 @@ class Presentation {
             const endY = e.changedTouches[0].clientY;
             const diffX = startX - endX;
             const diffY = startY - endY;
+            const timeDiff = Date.now() - startTime;
             
-            // Проверяем, что это горизонтальный свайп с достаточной длиной
-            if (!isVerticalScroll && Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 80) {
-                if (diffX > 0) {
+            // Проверяем, что это быстрый горизонтальный свайп
+            if (!isVerticalScroll && 
+                Math.abs(diffX) > Math.abs(diffY) && 
+                Math.abs(diffX) > 80 && 
+                timeDiff < 500) {
+                
+                const currentSlide = this.slides[this.currentSlide];
+                const isAtTop = currentSlide.scrollTop === 0;
+                const isAtBottom = currentSlide.scrollTop + currentSlide.clientHeight >= currentSlide.scrollHeight - 10;
+                
+                if (diffX > 0 && isAtBottom) {
                     this.nextSlide();
-                } else {
+                } else if (diffX < 0 && isAtTop) {
                     this.previousSlide();
                 }
             }
@@ -115,6 +134,7 @@ class Presentation {
             // Сброс значений
             startX = 0;
             startY = 0;
+            startTime = 0;
             isVerticalScroll = false;
         }, { passive: true });
     }
@@ -129,6 +149,9 @@ class Presentation {
         
         // Обновляем индекс
         this.currentSlide = index;
+        
+        // Сбрасываем прокрутку нового слайда наверх
+        this.slides[this.currentSlide].scrollTop = 0;
         
         // Добавляем активный класс новому слайду
         setTimeout(() => {
@@ -362,9 +385,11 @@ if (window.innerWidth <= 768) {
         
         mobileHint.innerHTML = `
             <div style="font-size: 2.5rem; margin-bottom: 15px;">👆</div>
-            <div style="font-weight: 600; margin-bottom: 10px; color: #90EE90;">Проведите пальцем</div>
-            <div style="margin-bottom: 15px;">влево или вправо</div>
-            <div style="font-size: 14px; opacity: 0.8;">для переключения слайдов</div>
+            <div style="font-weight: 600; margin-bottom: 10px; color: #90EE90;">Навигация на мобильном</div>
+            <div style="margin-bottom: 8px; font-size: 16px;">📱 Прокрутка вверх/вниз - чтение слайда</div>
+            <div style="margin-bottom: 8px; font-size: 16px;">👈👉 Свайп влево/вправо - смена слайдов</div>
+            <div style="margin-bottom: 15px; font-size: 16px;">🔽 Кнопки внизу экрана</div>
+            <div style="font-size: 12px; opacity: 0.8;">Проведите до конца слайда, затем свайп для перехода</div>
         `;
         
         document.body.appendChild(mobileHint);
